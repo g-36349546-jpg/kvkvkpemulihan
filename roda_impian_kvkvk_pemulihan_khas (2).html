@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roda Impian KVKVK - Bahasa Melayu Pemulihan Khas</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Fredoka', 'Century Gothic', 'CenturyGothic', sans-serif;
+            background: linear-gradient(135deg, #a8edd5 0%, #fed6e3 100%);
+            min-height: 100vh;
+        }
+
+        .wheel-font {
+            font-family: 'Century Gothic', 'CenturyGothic', sans-serif;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            border: 3px solid #ffffff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 24px;
+        }
+
+        /* Game Canvas Wheel Shadow */
+        .wheel-container {
+            position: relative;
+            filter: drop-shadow(0px 12px 20px rgba(0, 0, 0, 0.2));
+        }
+
+        /* Drag and Drop styling */
+        .draggable-tile {
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .draggable-tile:active {
+            cursor: grabbing;
+            transform: scale(1.08);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .drop-zone {
+            min-width: 50px;
+            min-height: 60px;
+            border: 3px dashed #3b82f6;
+            transition: all 0.2s ease;
+        }
+        .drop-zone.hovered {
+            background-color: #dbeafe;
+            border-color: #2563eb;
+            transform: scale(1.03);
+        }
+
+        /* Certificate Print Styling */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #certificateModal, #certificateModal * {
+                visibility: visible;
+            }
+            #certificateModal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: white;
+                box-shadow: none;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.7); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes bounceSlow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .bounce-slow {
+            animation: bounceSlow 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="text-slate-800 pb-12">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b-4 border-yellow-400 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-tr from-pink-500 to-yellow-400 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-md">
+                    <i class="fa-solid font-bold fa-dharmachakra animate-spin-slow"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-extrabold text-indigo-900 leading-tight">RODA IMPIAN KVKVK</h1>
+                    <p class="text-xs text-indigo-600 font-semibold">Bahasa Melayu Pemulihan Khas</p>
+                </div>
+            </div>
+
+            <!-- Profile & Score Badge -->
+            <div class="flex items-center gap-3">
+                <button onclick="openProfileModal()" class="flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 px-3 py-1.5 rounded-xl border border-indigo-200 transition">
+                    <i class="fa-solid fa-user-graduate text-indigo-600"></i>
+                    <div class="text-left text-xs">
+                        <div id="navStudentName" class="font-bold truncate max-w-[100px]">Murid</div>
+                        <div id="navStudentClass" class="text-slate-500 text-[10px]">Kelas Pemulihan</div>
+                    </div>
+                    <i class="fa-solid fa-pen text-[10px] ml-1 text-slate-400"></i>
+                </button>
+
+                <div class="bg-amber-400 text-slate-900 px-4 py-1.5 rounded-xl font-extrabold text-sm flex items-center gap-2 shadow-md">
+                    <i class="fa-solid fa-star text-amber-100 text-lg"></i>
+                    <span><span id="totalPoints">0</span> MATA</span>
+                </div>
+
+                <button id="soundToggleBtn" onclick="toggleSound()" class="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 transition">
+                    <i id="soundIcon" class="fa-solid fa-volume-high text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 pt-6">
+
+        <!-- Navigation Tabs for Teacher / Leaderboard / Game -->
+        <div class="flex justify-center mb-6 no-print">
+            <div class="bg-white/80 p-1.5 rounded-2xl shadow-md border border-white flex gap-2">
+                <button onclick="switchTab('game')" id="tabBtnGame" class="px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 bg-indigo-600 text-white shadow-md">
+                    <i class="fa-solid fa-gamepad"></i> Permainan Roda
+                </button>
+                <button onclick="switchTab('leaderboard')" id="tabBtnLeaderboard" class="px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 text-slate-700 hover:bg-slate-100">
+                    <i class="fa-solid fa-trophy text-amber-500"></i> Papan Markah
+                </button>
+                <button onclick="switchTab('teacher')" id="tabBtnTeacher" class="px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 text-slate-700 hover:bg-slate-100">
+                    <i class="fa-solid fa-clipboard-user text-emerald-600"></i> Rekod Guru
+                </button>
+            </div>
+        </div>
+
+        <!-- SECTION 1: GAME TAB -->
+        <section id="gameSection" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+            <!-- Left Panel: Wheel of Fortune Canvas -->
+            <div class="lg:col-span-7 glass-card p-6 flex flex-col items-center text-center relative overflow-hidden">
+                <div class="mb-2">
+                    <span class="bg-indigo-100 text-indigo-800 font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider">
+                        Kemahiran 5: Perkataan KVKVK
+                    </span>
+                    <h2 class="text-2xl font-black text-slate-800 mt-1">Putar Roda & Jawab Soalan!</h2>
+                    <p class="text-xs text-slate-600">Klik butang di bawah untuk memutarkan Roda Impian Nombor 1-15</p>
+                </div>
+
+                <!-- Wheel Canvas Container -->
+                <div class="wheel-container my-4">
+                    <!-- Top Pointer -->
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 z-20 w-8 h-10 flex flex-col items-center">
+                        <div class="w-0 h-0 border-l-[16px] border-l-transparent border-r-[16px] border-r-transparent border-t-[28px] border-t-red-600 drop-shadow-md"></div>
+                    </div>
+
+                    <canvas id="wheelCanvas" width="380" height="380" class="max-w-full h-auto cursor-pointer"></canvas>
+                </div>
+
+                <!-- Spin Button -->
+                <button id="spinBtn" onclick="spinWheel()" class="w-full max-w-xs py-4 px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 hover:from-pink-600 hover:to-indigo-700 text-white font-extrabold text-xl rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-3 border-b-4 border-indigo-900">
+                    <i class="fa-solid fa-arrows-spin text-2xl animate-spin"></i>
+                    <span>PUTAR RODA!</span>
+                </button>
+
+                <!-- Status Progress -->
+                <div class="mt-6 w-full bg-slate-100 rounded-xl p-3 flex justify-between items-center text-xs text-slate-600 font-bold border border-slate-200">
+                    <span>Kemajuan Murid:</span>
+                    <span id="progressText" class="text-indigo-600 text-sm">0 / 15 Soalan Selesai</span>
+                </div>
+            </div>
+
+            <!-- Right Panel: Instructions & Question Trigger Card -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+
+                <!-- Selected Question Banner -->
+                <div class="glass-card p-6 border-l-8 border-l-indigo-500">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                            <i class="fa-solid fa-bullseye text-indigo-500"></i> Status Roda
+                        </h3>
+                        <span id="currentSliceBadge" class="bg-slate-200 text-slate-700 text-xs font-bold px-2.5 py-1 rounded-lg">
+                            Sedia Memutar
+                        </span>
+                    </div>
+
+                    <div id="wheelPromptBox" class="py-6 text-center">
+                        <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl bounce-slow">
+                            <i class="fa-solid fa-hand-pointer"></i>
+                        </div>
+                        <p class="font-bold text-slate-700 text-lg">Tekan Butang PUTAR RODA</p>
+                        <p class="text-xs text-slate-500 mt-1">Sektor nombor 1 hingga 15 mengandungi soalan berkonsepkan gambar interaktif.</p>
+                    </div>
+
+                    <!-- Button to open active question directly if selected -->
+                    <button id="openQuestionBtn" onclick="openCurrentQuestionModal()" class="hidden w-full mt-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-base rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play"></i> Buka Soalan Sekarang!
+                    </button>
+                </div>
+
+                <!-- Word List Overview Badge Card -->
+                <div class="glass-card p-6">
+                    <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-2 text-sm">
+                        <i class="fa-solid fa-list-check text-indigo-600"></i> Senarai Perkataan KVKVK (15)
+                    </h3>
+                    <div id="wordGrid" class="grid grid-cols-3 gap-2 text-center text-xs font-bold">
+                        <!-- Dynamically filled with word buttons -->
+                    </div>
+                </div>
+
+                <!-- Quick Action Buttons -->
+                <div class="flex gap-3">
+                    <button onclick="generateCertificate()" class="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-md transition text-xs flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-award text-base"></i> Jana Sijil Murid
+                    </button>
+                    <button onclick="resetProgress()" class="py-3 px-4 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl shadow transition text-xs">
+                        <i class="fa-solid fa-rotate-right"></i> Set Semula
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: LEADERBOARD TAB -->
+        <section id="leaderboardSection" class="hidden glass-card p-8 max-w-3xl mx-auto">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-2 text-3xl">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800">Papan Markah Utama</h2>
+                <p class="text-xs text-slate-500">Senarai pencapaian terbaik murid Pemulihan Khas Bahasa Melayu</p>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-indigo-50 text-indigo-900 text-xs font-bold uppercase tracking-wider border-b-2 border-indigo-200">
+                            <th class="p-3 rounded-l-xl">Kedudukan</th>
+                            <th class="p-3">Nama Murid</th>
+                            <th class="p-3">Kelas</th>
+                            <th class="p-3 text-center">Markah</th>
+                            <th class="p-3 rounded-r-xl text-center">Tahap</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardTableBody" class="text-sm font-semibold divide-y divide-slate-100">
+                        <!-- Dynamic Leaderboard Content -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECTION 3: TEACHERS' RECORD TAB -->
+        <section id="teacherSection" class="hidden glass-card p-8">
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-black text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-clipboard-check text-emerald-600"></i> Rekod Pentaksiran Guru
+                    </h2>
+                    <p class="text-xs text-slate-500">Analisis Kemahiran Perkataan Tertutup KVKVK (15 Perkataan)</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="exportTeacherRecord()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-file-excel"></i> Eksport Data
+                    </button>
+                    <button onclick="window.print()" class="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-print"></i> Cetak Rekod
+                    </button>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 bg-indigo-500 text-white rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-indigo-600 font-bold">Jumlah Murid Dinilai</div>
+                        <div id="summaryTotalStudents" class="text-2xl font-black text-indigo-900">1</div>
+                    </div>
+                </div>
+
+                <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-emerald-600 font-bold">Tahap EXCELLENT</div>
+                        <div id="summaryExcellentCount" class="text-2xl font-black text-emerald-900">0</div>
+                    </div>
+                </div>
+
+                <div class="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 bg-rose-500 text-white rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-rose-600 font-bold">Perlu INTERVENSI</div>
+                        <div id="summaryIntervensiCount" class="text-2xl font-black text-rose-900">1</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teachers' Data Table -->
+            <div class="overflow-x-auto bg-white rounded-2xl border border-slate-200 shadow-sm">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 text-xs font-extrabold uppercase border-b border-slate-200">
+                            <th class="p-3">Bil</th>
+                            <th class="p-3">Nama Murid</th>
+                            <th class="p-3">Kelas</th>
+                            <th class="p-3 text-center">Soalan Dijawab</th>
+                            <th class="p-3 text-center">Jumlah Markah</th>
+                            <th class="p-3 text-center">Tahap Pencapaian</th>
+                            <th class="p-3 text-center">Tindakan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teacherTableBody" class="text-sm divide-y divide-slate-100 font-medium">
+                        <!-- Dynamic Row content -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- INTERACTIVE QUESTION MODAL -->
+    <div id="questionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 md:p-8 shadow-2xl relative border-4 border-indigo-400 animate-pop my-8">
+            <!-- Close Modal Button -->
+            <button onclick="closeQuestionModal()" class="absolute top-4 right-4 w-10 h-10 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full flex items-center justify-center transition">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <!-- Question Header -->
+            <div class="flex items-center gap-3 mb-4">
+                <span id="modalNumberBadge" class="w-12 h-12 bg-amber-400 text-slate-900 font-extrabold text-xl rounded-2xl flex items-center justify-center shadow">
+                    1
+                </span>
+                <div>
+                    <h3 class="text-xl font-black text-slate-800">SOALAN RODA IMPIAN</h3>
+                    <p class="text-xs text-indigo-600 font-bold">Kemahiran Perkataan KVKVK (+10 Markah)</p>
+                </div>
+            </div>
+
+            <!-- Dynamic SVG / Photo Visual Graphic Container -->
+            <div class="bg-indigo-50 border-2 border-indigo-100 rounded-2xl p-4 flex flex-col items-center justify-center mb-6">
+                <div id="questionImageContainer" class="w-48 h-48 flex items-center justify-center drop-shadow-md overflow-hidden rounded-2xl">
+                    <!-- Dynamic realistic photo inserted here -->
+                </div>
+                <p id="questionHintText" class="text-xs text-indigo-800 font-bold mt-2 bg-indigo-100 px-3 py-1 rounded-full">
+                    Sila kenal pasti gambar di atas
+                </p>
+            </div>
+
+            <!-- Step Tabs inside Modal -->
+            <div class="flex border-b border-slate-200 mb-6 gap-2 text-xs font-bold">
+                <button id="stepTab1" class="pb-2 border-b-4 border-indigo-600 text-indigo-600 flex items-center gap-1.5">
+                    <span class="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px]">1</span> Pilihan Jawapan
+                </button>
+                <button id="stepTab2" class="pb-2 text-slate-400 flex items-center gap-1.5 opacity-60">
+                    <span class="w-5 h-5 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center text-[10px]">2</span> Drag & Drop
+                </button>
+                <button id="stepTab3" class="pb-2 text-slate-400 flex items-center gap-1.5 opacity-60">
+                    <span class="w-5 h-5 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center text-[10px]">3</span> Fill in the Blanks
+                </button>
+            </div>
+
+            <!-- TASK 1: 3 PILIHAN JAWAPAN -->
+            <div id="task1Container" class="space-y-4">
+                <p class="text-sm font-bold text-slate-700">Langkah 1: Pilih jawapan yang betul mengikut gambar:</p>
+                <div id="optionsContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <!-- 3 Multiple Choice Options Rendered Here -->
+                </div>
+            </div>
+
+            <!-- TASK 2: DRAG & DROP -->
+            <div id="task2Container" class="hidden space-y-4">
+                <p class="text-sm font-bold text-slate-700">Langkah 2: Tarik & Lepas (Drag & Drop) huruf untuk membentuk perkataan:</p>
+                
+                <!-- Target Drop Slot Area -->
+                <div class="flex justify-center items-center gap-2 p-4 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300">
+                    <div id="dropSlotsContainer" class="flex gap-2">
+                        <!-- Drop target slots generated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Source Draggable Tiles Area -->
+                <div class="text-center">
+                    <p class="text-xs text-slate-500 mb-2">Jubin Huruf (Tarik ke kotak atas):</p>
+                    <div id="dragTilesContainer" class="flex flex-wrap justify-center gap-2 min-h-[60px]">
+                        <!-- Draggable tiles generated dynamically -->
+                    </div>
+                </div>
+
+                <button onclick="verifyDragAndDrop()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition shadow">
+                    Semak Susunan Huruf
+                </button>
+            </div>
+
+            <!-- TASK 3: FILL IN THE BLANKS -->
+            <div id="task3Container" class="hidden space-y-4">
+                <p class="text-sm font-bold text-slate-700">Langkah 3: Lengkapkan ejaan perkataan di bawah:</p>
+                <div class="bg-amber-50 p-6 rounded-2xl border-2 border-amber-200 flex flex-col items-center gap-4">
+                    <div id="blankPromptDisplay" class="text-3xl font-black tracking-widest text-slate-800">
+                        <!-- e.g., B _ R U K -->
+                    </div>
+                    <div class="flex gap-2 w-full max-w-xs">
+                        <input type="text" id="blankInput" maxlength="10" placeholder="Taip jawapan..." class="w-full px-4 py-3 border-2 border-amber-300 rounded-xl text-center text-lg font-bold uppercase focus:outline-none focus:border-amber-500">
+                        <button onclick="verifyFillInBlank()" class="px-5 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition shadow">
+                            Hantar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback Message Alert Box -->
+            <div id="feedbackBox" class="hidden mt-4 p-4 rounded-2xl text-center font-bold text-base transition-all animate-pop">
+                <!-- TERBAIK or CUBA LAGI message -->
+            </div>
+
+            <!-- Next / Finish Modal Button -->
+            <div class="mt-6 flex justify-end">
+                <button id="modalNextBtn" onclick="nextQuestionTask()" class="hidden px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-xl shadow-lg transition flex items-center gap-2">
+                    <span>Seterusnya</span> <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- STUDENT PROFILE MODAL -->
+    <div id="profileModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-indigo-400">
+            <h3 class="text-xl font-black text-slate-800 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-id-card text-indigo-600"></i> Maklumat Murid
+            </h3>
+            <p class="text-xs text-slate-500 mb-4">Sila masukkan nama dan kelas murid sebelum memulakan aktiviti.</p>
+
+            <form onsubmit="saveStudentProfile(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Murid:</label>
+                    <input type="text" id="inputStudentName" required class="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl font-semibold text-sm focus:outline-none focus:border-indigo-500" placeholder="Contoh: Amirul Bin Ahmad">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Kelas:</label>
+                    <input type="text" id="inputStudentClass" required class="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl font-semibold text-sm focus:outline-none focus:border-indigo-500" placeholder="Contoh: 1 Gemilang / Pemulihan">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeProfileModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow">
+                        Simpan Maklumat
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SIJIL PENCAPAIAN MODAL -->
+    <div id="certificateModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-amber-50 rounded-3xl max-w-3xl w-full p-8 shadow-2xl relative border-8 border-amber-400 my-6">
+            <button onclick="closeCertificateModal()" class="no-print absolute top-4 right-4 w-10 h-10 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-full flex items-center justify-center">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <!-- Certificate Frame Inner -->
+            <div class="border-4 border-dashed border-amber-600 p-8 text-center bg-white rounded-2xl relative">
+                <div class="text-amber-500 text-4xl mb-2">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                <h2 class="text-3xl font-black text-indigo-900 tracking-wider uppercase mb-1">SIJIL PENCAPAIAN</h2>
+                <p class="text-xs font-bold text-amber-700 tracking-widest uppercase mb-6">BAHASA MELAYU PEMULIHAN KHAS</p>
+
+                <p class="text-xs text-slate-600 italic">Dengan ini diperakui bahawa</p>
+                <h3 id="certStudentName" class="text-2xl font-black text-slate-900 my-2 underline decoration-amber-400 underline-offset-8">
+                    NAMA MURID
+                </h3>
+                <p class="text-xs text-slate-600 mb-4">Kelas: <span id="certStudentClass" class="font-bold text-slate-800">1 Gemilang</span></p>
+
+                <p class="text-xs text-slate-700 max-w-md mx-auto leading-relaxed mb-6">
+                    Telah berjaya menyelesaikan Modul **Roda Impian Interaktif** bagi Kemahiran Perkataan Tertutup **KVKVK** dengan pencapaian cemerlang:
+                </p>
+
+                <div class="inline-flex items-center gap-6 bg-amber-100/80 px-6 py-3 rounded-2xl border border-amber-300 mb-8">
+                    <div>
+                        <div class="text-[10px] text-amber-800 font-bold uppercase">Jumlah Markah</div>
+                        <div id="certMarks" class="text-xl font-black text-amber-900">150 / 150</div>
+                    </div>
+                    <div class="w-px h-8 bg-amber-300"></div>
+                    <div>
+                        <div class="text-[10px] text-amber-800 font-bold uppercase">Tahap Penguasaan</div>
+                        <div id="certLevel" class="text-xl font-black text-emerald-600">EXCELLENT</div>
+                    </div>
+                </div>
+
+                <!-- Signature Section -->
+                <div class="flex justify-between items-end pt-6 border-t border-slate-200 text-xs text-slate-600">
+                    <div class="text-left">
+                        <p class="font-bold">Tarikh: <span id="certDate">--/--/----</span></p>
+                        <p class="text-[10px] text-slate-400">Sistem BBM Digital Pemulihan</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-32 border-b border-slate-800 mb-1"></div>
+                        <p class="font-bold text-slate-800">Tandatangan Guru</p>
+                        <p class="text-[10px] text-slate-500">Guru Pemulihan Khas</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Print Button -->
+            <div class="no-print mt-6 flex justify-center gap-3">
+                <button onclick="window.print()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg transition flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-print"></i> Cetak Sijil Ini
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        /* ==========================================================================
+           1. DATA STRUCTURE: 15 KVKVK TARGET WORDS WITH EASY-TO-UNDERSTAND VISUALS
+           ========================================================================== */
+        const QUESTION_DATA = [
+            {
+                id: 1,
+                word: "BURUK",
+                hint: "Rumah kayu usang dan buruk",
+                options: ["BURUK", "BUBUK", "BUDAK"],
+                syllables: ["BU", "RUK"],
+                letters: ["B", "U", "R", "U", "K"],
+                blank: "B _ R U K",
+                missingIndex: 1,
+                image: `<svg viewBox="0 0 200 200" class="w-44 h-44 rounded-2xl shadow-lg border-4 border-amber-200 bg-amber-50">
+                    <rect width="200" height="200" fill="#fef3c7"/>
+                    <path d="M0,160 Q50,150 100,165 T200,160 L200,200 L0,200 Z" fill="#b45309"/>
+                    <polygon points="40,160 40,90 150,100 150,160" fill="#d97706" stroke="#78350f" stroke-width="3"/>
+                    <polygon points="30,95 95,45 160,105" fill="#92400e" stroke="#451a03" stroke-width="4"/>
+                    <ellipse cx="75" cy="75" rx="12" ry="8" fill="#fef3c7"/>
+                    <polygon points="80,160 80,120 105,125 100,160" fill="#78350f"/>
+                    <rect x="50" y="110" width="20" height="20" fill="#fef3c7" stroke="#78350f" stroke-width="2"/>
+                    <line x1="50" y1="110" x2="70" y2="130" stroke="#78350f" stroke-width="2"/>
+                    <path d="M40,90 L55,100 M40,100 L50,90" stroke="#a1a1aa" stroke-width="1.5"/>
+                    <text x="100" y="188" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#78350f" text-anchor="middle">RUMAH BURUK</text>
+                </svg>`
+            },
+            {
+                id: 2,
+                word: "BASAH",
+                hint: "Baju basah terkena air hujan",
+                options: ["BASAH", "BASOH", "BATAH"],
+                syllables: ["BA", "SAH"],
+                letters: ["B", "A", "S", "A", "H"],
+                blank: "B A _ A H",
+                missingIndex: 2,
+                image: `<svg viewBox="0 0 200 200" class="w-44 h-44 rounded-2xl shadow-lg border-4 border-blue-200 bg-blue-50">
+                    <rect width="200" height="200" fill="#e0f2fe"/>
+                    <path d="M50,60 Q40,40 60,35 Q75,20 105,30 Q125,20 145,35 Q160,40 150,60 Z" fill="#94a3b8"/>
+                    <path d="M60,75 L55,95 M90,70 L85,90 M120,75 L115,95 M140,70 L135,90 M75,100 L70,120 M105,100 L100,120 M130,100 L125,120" stroke="#0284c7" stroke-width="3" stroke-dasharray="4,2" stroke-linecap="round"/>
+                    <line x1="20" y1="100" x2="180" y2="100" stroke="#64748b" stroke-width="2"/>
+                    <path d="M70,100 L80,110 L95,105 L110,110 L120,100 L125,145 L115,148 L105,135 L95,148 L85,135 L75,148 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/>
+                    <path d="M85,155 Q85,165 88,165 Q91,165 91,155 Z M105,155 Q105,165 108,165 Q111,165 111,155 Z" fill="#0284c7"/>
+                    <text x="100" y="188" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#0369a1" text-anchor="middle">BAJU BASAH</text>
+                </svg>`
+            },
+            {
+                id: 3,
+                word: "DEMAM",
+                hint: "Budak demam panas di atas katil",
+                options: ["DEMAM", "DEMAN", "DEPAN"],
+                syllables: ["DE", "MAM"],
+                letters: ["D", "E", "M", "A", "M"],
+                blank: "D E _ A M",
+                missingIndex: 2,
+                image: `<svg viewBox="0 0 200 200" class="w-44 h-44 rounded-2xl shadow-lg border-4 border-rose-200 bg-rose-50">
+                    <rect width="200" height="200" fill="#fff1f2"/>
+                    <rect x="20" y="120" width="160" height="50" rx="10" fill="#f43f5e"/>
+                    <rect x="25" y="100" width="40" height="30" rx="8" fill="#ffffff"/>
+                    <circle cx="50" cy="110" r="18" fill="#fbcfe8"/>
+                    <circle cx="44" cy="108" r="2" fill="#475569"/>
+                    <circle cx="56" cy="108" r="2" fill="#475569"/>
+                    <path d="M45,120 Q50,115 55,120" stroke="#475569" stroke-width="2" fill="none"/>
+                    <rect x="38" y="98" width="24" height="8" rx="3" fill="#38bdf8"/>
+                    <line x1="52" y1="116" x2="70" y2="124" stroke="#e11d48" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M40,85 Q45,75 40,65 M50,85 Q55,75 50,65 M60,85 Q65,75 60,65" stroke="#f43f5e" stroke-width="2.5" fill="none"/>
+                    <text x="100" y="188" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#be123c" text-anchor="middle">DEMAM PANAS</text>
+                </svg>`
+            },
+            {
+                id: 4,
+                word: "GALAH",
+                hint: "Galah panjang untuk menjolok buah",
+                options: ["GALAH", "GALAS", "GAJAH"],
+                syllables: ["GA", "LAH"],
+                letters: ["G", "A", "L", "A", "H"],
+                blank: "G A L _ H",
+                missingIndex: 3,
+                image: `<svg viewBox="0 0 200 200" class="w-44 h-44 rounded-2xl shadow-lg border-4 border-emerald-200 bg-emerald-50">
+                    <rect width="200" height="200" fill="#ecfdf5"/>
+                    <!-- Pokok Buah -->
+                    <circle cx="150" cy="50" r="40" fill="#22c55e"/>
+                    <circle cx="120" cy="40" r="30" fill="#16a34a"/>
+                    <circle cx="170" cy="60" r="25" fill="#15803d"/>
+                    <rect x="145" y="80" width="18" height="90" fill="#854d0e"/>
+                    <!-- Buah Mangga -->
+                    <ellipse cx="130" cy="55" rx="8" ry="12" fill="#f59e0b"/>
+                    <ellipse cx="160" cy="45" rx="8" ry="12" fill="#f59e0b"/>
+                    <!-- Orang Pegang Galah -->
+                    <circle cx="35" cy="145" r="10" fill="#fdba74"/>
+                    <path d="M35,155 L35,180 M35,162 L25,175 M35,162 L45,170" stroke="#1e293b" stroke-width="3"/>
+                    <!-- GALAH PANJANG JO LOK BUAH -->
+                    <line x1="38" y1="160" x2="130" y2="58" stroke="#a16207" stroke-width="6" stroke-linecap="round"/>
+                    <path d="M125,62 L132,54 L128,50" stroke="#451a03" stroke-width="3" fill="none"/>
+                    <!-- Label Penunjuk Galah -->
+                    <rect x="45" y="115" width="60" height="22" rx="6" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+                    <text x="75" y="130" font-family="Fredoka, sans-serif" font-weight="bold" font-size="12" fill="#854d0e" text-anchor="middle">← GALAH</text>
+                    <text x="100" y="190" font-family="Fredoka, sans-serif" font-weight="bold" font-size="13" fill="#15803d" text-anchor="middle">GALAH JOLOK BUAH</text>
+                </svg>`
+            },
+            {
+                id: 5,
+                word: "GARAM",
+                hint: "Garam putih untuk rasa masin",
+                options: ["GARAM", "GARAP", "GAHAM"],
+                syllables: ["GA", "RAM"],
+                letters: ["G", "A", "R", "A", "M"],
+                blank: "G _ R A M",
+                missingIndex: 1,
+                image: `<svg viewBox="0 0 200 200" class="w-44 h-44 rounded-2xl shadow-lg border-4 border-slate-300 bg-slate-50">
+                    <rect width="200" height="200" fill="#f8fafc"/>
+                    <rect x="50" y="70" width="45" height="70" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="3"/>
+                    <rect x="52" y="55" width="41" height="15" rx="3" fill="#cbd5e1" stroke="#64748b" stroke-width="2"/>
+                    <circle cx="62" cy="62" r="2" fill="#334155"/>
+                    <circle cx="72" cy="62" r="2" fill="#334155"/>
+                    <circle cx="82" cy="62" r="2" fill="#334155"/>
+                    <rect x="55" y="90" width="35" height="22" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+                    <text x="72" y="105" font-family="Fredoka, sans-serif" font-weight="bold" font-size="10" fill="#0f172a" text-anchor="middle">GARAM</text>
+                    <path d="M110,140 Q135,100 160,140 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+                    <ellipse cx="135" cy="118" rx="14" ry="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                    <path d="M135,126 Q140,160 170,165" stroke="#94a3b8" stroke-width="4" fill="none" stroke-linecap="round"/>
+                    <text x="100" y="188" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#334155" text-anchor="middle">GARAM DAPUR</text>
+                </svg>`
+            },
+            {
+                id: 6,
+                word: "JALAN",
+                hint: "Jalan raya laluan bertar",
+                options: ["JALAN", "JALAL", "JALUR"],
+                syllables: ["JA", "LAN"],
+                letters: ["J", "A", "L", "A", "N"],
+                blank: "J A L A _",
+                missingIndex: 4,
+                image: `<svg viewBox="0 0 200 200" class="w-44 h-44 rounded-2xl shadow-lg border-4 border-slate-400 bg-slate-100">
+                    <rect width="200" height="200" fill="#f1f5f9"/>
+                    <polygon points="0,0 60,0 20,200 0,200" fill="#4ade80"/>
+                    <polygon points="140,0 200,0 200,200 180,200" fill="#4ade80"/>
+                    <polygon points="60,0 140,0 180,200 20,200" fill="#334155"/>
+                    <line x1="100" y1="10" x2="100" y2="40" stroke="#facc15" stroke-width="6"/>
+                    <line x1="100" y1="70" x2="100" y2="110" stroke="#facc15" stroke-width="8"/>
+                    <line x1="100" y1="140" x2="100" y2="190" stroke="#facc15" stroke-width="10"/>
+                    <rect x="75" y="110" width="50" height="25" rx="6" fill="#ef4444"/>
+                    <rect x="85" y="100" width="30" height="15" rx="4" fill="#93c5fd"/>
+                    <circle cx="85" cy="135" r="5" fill="#0f172a"/>
+                    <circle cx="115" cy="135" r="5" fill="#0f172a"/>
+                    <text x="100" y="188" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#0f172a" text-anchor="middle">JALAN RAYA</text>
+                </svg>`
+            },
+            {
+                id: 7,
+                word: "LAPAN",
+                hint: "Nombor lapan (8)",
+                options: ["LAPAN", "LAPAR", "LALAN"],
+                syllables: ["LA", "PAN"],
+                letters: ["L", "A", "P", "A", "N"],
+                blank: "L A _ A N",
+                missingIndex: 2,
+                image: `<svg viewBox="0 0 200 200" class="w-44 h-44 rounded-2xl shadow-lg border-4 border-pink-300 bg-pink-50">
+                    <rect width="200" height="200" fill="#fdf2f8"/>
+                    <text x="103" y="133" font-family="Fredoka, sans-serif" font-weight="900" font-size="110" fill="#be185d" text-anchor="middle">8</text>
+                    <text x="100" y="130" font-family="Fredoka, sans-serif" font-weight="900" font-size="110" fill="#ec4899" text-anchor="middle">8</text>
+                    <circle cx="30" cy="40" r="8" fill="#ef4444"/><circle cx="170" cy="40" r="8" fill="#ef4444"/>
+                    <circle cx="25" cy="100" r="8" fill="#ef4444"/><circle cx="175" cy="100" r="8" fill="#ef4444"/>
+                    <circle cx="35" cy="155" r="8" fill="#ef4444"/><circle cx="165" cy="155" r="8" fill="#ef4444"/>
+                    <circle cx="70" cy="25" r="8" fill="#ef4444"/><circle cx="130" cy="25" r="8" fill="#ef4444"/>
+                    <text x="100" y="188" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#9d174d" text-anchor="middle">NOMBOR LAPAN (8)</text>
+                </svg>`
+            },
+            {
+                id: 8,
+                word: "MASAK",
+                hint: "Ibu memasak makanan di dapur",
+                options: ["MASAK", "MASAM", "MACAK"],
+                syllables: ["MA", "SAK"],
+                letters: ["M", "A", "S", "A", "K"],
+                blank: "M A S _ K",
+                missingIndex: 3,
+                image: `<svg viewBox="0 0 200 200" class="w-44 h-44 rounded-2xl shadow-lg border-4 border-amber-300 bg-amber-50">
+                    <rect width="200" height="200" fill="#fffbeb"/>
+                    <rect x="30" y="130" width="140" height="25" rx="5" fill="#64748b"/>
+                    <path d="M70,130 Q75,115 80,130 M120,130 Q125,115 130,130" stroke="#f97316" stroke-width="5" fill="none"/>
+                    <rect x="55" y="70" width="90" height="55" rx="8" fill="#ef4444" stroke="#b91c1c" stroke-width="3"/>
+                    <rect x="45" y="80" width="10" height="15" rx="3" fill="#b91c1c"/>
+                    <rect x="145" y="80" width="10" height="15" rx="3" fill="#b91c1c"/>
+                    <path d="M75,60 Q80,45 75,35 M100,60 Q105,45 100,35 M125,60 Q130,45 125,35" stroke="#cbd5e1" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <line x1="110" y1="40" x2="95" y2="85" stroke="#d97706" stroke-width="5" stroke-linecap="round"/>
+                    <text x="100" y="188" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#b45309" text-anchor="middle">IBU MEMASAK</text>
+                </svg>`
+            },
+            {
+                id: 9,
+                word: "NENEK",
+                hint: "Nenek tua tersenyum mesra",
+                options: ["NENEK", "NENAS", "NENOK"],
+                syllables: ["NE", "NEK"],
+                letters: ["N", "E", "N", "E", "K"],
+                blank: "N E _ E K",
+                missingIndex: 2,
+                image: `<svg viewBox="0 0 200 200" class="w-44 h-44 rounded-2xl shadow-lg border-4 border-purple-200 bg-purple-50">
+                    <rect width="200" height="200" fill="#faf5ff"/>
+                    <circle cx="100" cy="90" r="35" fill="#fde047"/>
+                    <path d="M60,90 Q60,40 100,40 Q140,40 140,90 Q140,140 100,140 Q60,140 60,90 Z" fill="#c084fc" opacity="0.85"/>
+                    <circle cx="100" cy="95" r="28" fill="#fde047"/>
+                    <circle cx="88" cy="92" r="10" fill="none" stroke="#475569" stroke-width="3"/>
+                    <circle cx="112" cy="92" r="10" fill="none" stroke="#475569" stroke-width="3"/>
+                    <line x1="98" y1="92" x2="102" y2="92" stroke="#475569" stroke-width="3"/>
+                    <path d="M92,112 Q100,120 108,112" stroke="#475569" stroke-width="2.5" fill="none"/>
+                    <path d="M72,88 Q70,92 72,96 M128,88 Q130,92 128,96" stroke="#a1a1aa" stroke-width="1.5" fill="none"/>
+                    <text x="100" y="188" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#7e22ce" text-anchor="middle">NENEK TUA</text>
+                </svg>`
+            },
+            {
+                id: 10,
+                word: "PANAS",
+                hint: "Cuaca terik matahari sangat panas",
+                options: ["PANAS", "PANAT", "PADAS"],
+                syllables: ["PA", "NAS"],
+                letters: ["P", "A", "N", "A", "S"],
+                blank: "P A N A _",
+                missingIndex: 4,
+                image: `<svg viewBox="0 0 200 200" class="w-44 h-44 rounded-2xl shadow-lg border-4 border-orange-300 bg-orange-50">
+                    <rect width="200" height="200" fill="#fff7ed"/>
+                    <circle cx="100" cy="85" r="35" fill="#f97316"/>
+                    <g stroke="#ea580c" stroke-width="4" stroke-linecap="round">
+                        <line x1="100" y1="35" x2="100" y2="20"/>
+                        <line x1="100" y1="135" x2="100" y2="150"/>
+                        <line x1="50" y1="85" x2="35" y2="85"/>
+                        <line x1="150" y1="85" x2="165" y2="85"/>
+                        <line x1="65" y1="50" x2="52" y2="37"/>
+                        <line x1="135" y1="120" x2="148" y2="133"/>
+                        <line x1="65" y1="120" x2="52" y2="133"/>
+                        <line x1="135" y1="50" x2="148" y2="37"/>
+                    </g>
+                    <rect x="78" y="78" width="18" height="12" rx="3" fill="#1e293b"/>
+                    <rect x="104" y="78" width="18" height="12" rx="3" fill="#1e293b"/>
+                    <line x1="96" y1="82" x2="104" y2="82" stroke="#1e293b" stroke-width="2"/>
+                    <path d="M130,70 Q130,80 133,80 Q136,80 136,70 Z" fill="#38bdf8"/>
+                    <text x="100" y="188" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#c2410c" text-anchor="middle">CUACA PANAS</text>
+                </svg>`
+            },
+            {
+                id: 11,
+                word: "PERAK",
+                hint: "Pingat perak tempat kedua",
+                options: ["PERAK", "PERAB", "PERAH"],
+                syllables: ["PE", "RAK"],
+                letters: ["P", "E", "R", "A", "K"],
+                blank: "P _ R A K",
+                missingIndex: 1,
+                image: `<svg viewBox="0 0 200 200" class="w-44 h-44 rounded-2xl shadow-lg border-4 border-slate-300 bg-slate-100">
+                    <rect width="200" height="200" fill="#f1f5f9"/>
+                    <polygon points="80,20 100,70 85,70 70,20" fill="#ef4444"/>
+                    <polygon points="120,20 100,70 115,70 130,20" fill="#3b82f6"/>
+                    <circle cx="100" cy="105" r="38" fill="#e2e8f0" stroke="#94a3b8" stroke-width="4"/>
+                    <circle cx="100" cy="105" r="30" fill="#cbd5e1" stroke="#64748b" stroke-width="2"/>
+                    <text x="100" y="118" font-family="Fredoka, sans-serif" font-weight="900" font-size="36" fill="#334155" text-anchor="middle">2</text>
+                    <text x="100" y="188" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#334155" text-anchor="middle">PINGAT PERAK</text>
+                </svg>`
+            },
+            {
+                id: 12,
+                word: "RUMAH",
+                hint: "Rumah kediaman tempat tinggal",
+                options: ["RUMAH", "RUMAS", "RAMAH"],
+                syllables: ["RU", "MAH"],
+                letters: ["R", "U", "M", "A", "H"],
+                blank: "R U M _ H",
+                missingIndex: 3,
+                image: `<svg viewBox="0 0 200 200" class="w-44 h-44 rounded-2xl shadow-lg border-4 border-indigo-200 bg-indigo-50">
+                    <rect width="200" height="200" fill="#e0e7ff"/>
+                    <polygon points="30,90 100,35 170,90" fill="#ef4444" stroke="#b91c1c" stroke-width="3"/>
+                    <rect x="45" y="90" width="110" height="65" fill="#fef08a" stroke="#ca8a04" stroke-width="3"/>
+                    <rect x="85" y="115" width="30" height="40" rx="4" fill="#854d0e"/>
+                    <circle cx="110" cy="137" r="2.5" fill="#fef08a"/>
+                    <rect x="58" y="105" width="20" height="20" rx="3" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/>
+                    <rect x="122" y="105" width="20" height="20" rx="3" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/>
+                    <text x="100" y="188" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#3730a3" text-anchor="middle">RUMAH CHALET</text>
+                </svg>`
+            },
+            {
+                id: 13,
+                word: "SALAH",
+                hint: "Tanda pangkah merah menunjukkan salah",
+                options: ["SALAH", "SALAL", "SABAH"],
+                syllables: ["SA", "LAH"],
+                letters: ["S", "A", "L", "A", "H"],
+                blank: "S A L A _",
+                missingIndex: 4,
+                image: `<svg viewBox="0 0 200 200" class="w-44 h-44 rounded-2xl shadow-lg border-4 border-rose-300 bg-rose-50">
+                    <rect width="200" height="200" fill="#fff1f2"/>
+                    <rect x="45" y="25" width="110" height="135" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="3"/>
+                    <line x1="60" y1="45" x2="135" y2="45" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+                    <line x1="60" y1="65" x2="120" y2="65" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+                    <line x1="60" y1="85" x2="130" y2="85" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+                    <line x1="65" y1="55" x2="135" y2="125" stroke="#ef4444" stroke-width="14" stroke-linecap="round"/>
+                    <line x1="135" y1="55" x2="65" y2="125" stroke="#ef4444" stroke-width="14" stroke-linecap="round"/>
+                    <text x="100" y="188" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#9f1239" text-anchor="middle">TANDA SALAH (X)</text>
+                </svg>`
+            },
+            {
+                id: 14,
+                word: "TIMAH",
+                hint: "Bekas tin logam timah",
+                options: ["TIMAH", "TIMAP", "TILAH"],
+                syllables: ["TI", "MAH"],
+                letters: ["T", "I", "M", "A", "H"],
+                blank: "T _ M A H",
+                missingIndex: 1,
+                image: `<svg viewBox="0 0 200 200" class="w-44 h-44 rounded-2xl shadow-lg border-4 border-cyan-200 bg-cyan-50">
+                    <rect width="200" height="200" fill="#ecfeff"/>
+                    <rect x="60" y="55" width="80" height="90" rx="8" fill="#e2e8f0" stroke="#64748b" stroke-width="4"/>
+                    <line x1="60" y1="75" x2="140" y2="75" stroke="#94a3b8" stroke-width="3"/>
+                    <line x1="60" y1="95" x2="140" y2="95" stroke="#94a3b8" stroke-width="3"/>
+                    <line x1="60" y1="115" x2="140" y2="115" stroke="#94a3b8" stroke-width="3"/>
+                    <ellipse cx="100" cy="55" rx="40" ry="12" fill="#cbd5e1" stroke="#475569" stroke-width="3"/>
+                    <circle cx="100" cy="53" r="6" fill="none" stroke="#475569" stroke-width="2"/>
+                    <text x="100" y="188" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#0e7490" text-anchor="middle">TIN TIMAH LOGAM</text>
+                </svg>`
+            },
+            {
+                id: 15,
+                word: "BADAK",
+                hint: "Haiwan badak sumbu bertanduk",
+                options: ["BADAK", "BADAN", "BUDAK"],
+                syllables: ["BA", "DAK"],
+                letters: ["B", "A", "D", "A", "K"],
+                blank: "B A D A _",
+                missingIndex: 4,
+                image: `<svg viewBox="0 0 200 200" class="w-44 h-44 rounded-2xl shadow-lg border-4 border-slate-300 bg-slate-100">
+                    <rect width="200" height="200" fill="#f1f5f9"/>
+                    <ellipse cx="110" cy="110" rx="55" ry="38" fill="#94a3b8"/>
+                    <circle cx="55" cy="100" r="28" fill="#94a3b8"/>
+                    <polygon points="35,95 20,70 42,88" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+                    <polygon points="45,92 38,80 48,88" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+                    <circle cx="58" cy="92" r="3.5" fill="#0f172a"/>
+                    <rect x="75" y="135" width="16" height="30" rx="4" fill="#64748b"/>
+                    <rect x="130" y="135" width="16" height="30" rx="4" fill="#64748b"/>
+                    <rect x="0" y="160" width="200" height="40" fill="#86efac"/>
+                    <text x="100" y="188" font-family="Fredoka, sans-serif" font-weight="bold" font-size="14" fill="#334155" text-anchor="middle">BADAK SUMBU</text>
+                </svg>`
+            }
+        ];
+
+        /* ==========================================================================
+           2. GLOBAL GAME STATE VARIABLES
+           ========================================================================== */
+        let studentProfile = {
+            name: "Murid Pemulihan",
+            className: "1 Cemerlang",
+            points: 0,
+            completedQuestions: [] // Array of solved question IDs
+        };
+
+        // Leaderboard database (stored in memory / local)
+        let teacherRecords = [
+            { id: 1, name: "Ahmad Danish", className: "1 Cemerlang", points: 150, completedCount: 15, status: "EXCELLENT" },
+            { id: 2, name: "Siti Nurhaliza", className: "1 Pintar", points: 120, completedCount: 12, status: "EXCELLENT" },
+            { id: 3, name: "Muhammad Adam", className: "1 Cemerlang", points: 70, completedCount: 7, status: "INTERVENSI" }
+        ];
+
+        let isSoundEnabled = true;
+        let currentQuestion = null;
+        let currentStep = 1; // Step 1: Options, Step 2: Drag & Drop, Step 3: Fill Blank
+        let selectedSliceIndex = null;
+        let isSpinning = false;
+        let currentAngle = 0; // Wheel Rotation Angle
+
+        // Colors for 15 Wheel Slices
+        const SLICE_COLORS = [
+            "#f43f5e", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b",
+            "#ec4899", "#3b82f6", "#14b8a6", "#84cc16", "#eab308",
+            "#d946ef", "#6366f1", "#0284c7", "#059669", "#f97316"
+        ];
+
+        /* ==========================================================================
+           3. AUDIO SYNTHESIS USING WEB AUDIO API
+           ========================================================================== */
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function playSound(type) {
+            if (!isSoundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new AudioCtx();
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'tick') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(400, now);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'correct') {
+                    // Celebration chime: TERBAIK
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                    osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                    osc.start(now);
+                    osc.stop(now + 0.6);
+                } else if (type === 'wrong') {
+                    // Encouraging buzz: CUBA LAGI
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.setValueAtTime(180, now + 0.15);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'win') {
+                    // Fanfare for certificate / completion
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.setValueAtTime(554.37, now + 0.15);
+                    osc.frequency.setValueAtTime(659.25, now + 0.3);
+                    osc.frequency.setValueAtTime(880, now + 0.45);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+                    osc.start(now);
+                    osc.stop(now + 0.8);
+                }
+            } catch (e) {
+                console.log("Audio playback restricted");
+            }
+        }
+
+        function toggleSound() {
+            isSoundEnabled = !isSoundEnabled;
+            const soundIcon = document.getElementById('soundIcon');
+            if (isSoundEnabled) {
+                soundIcon.className = "fa-solid fa-volume-high text-lg text-slate-700";
+            } else {
+                soundIcon.className = "fa-solid fa-volume-xmark text-lg text-red-500";
+            }
+        }
+
+        /* ==========================================================================
+           4. WHEEL OF FORTUNE CANVAS RENDERING
+           ========================================================================== */
+        function drawWheel() {
+            const canvas = document.getElementById('wheelCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const numSlices = QUESTION_DATA.length; // 15 Slices
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = canvas.width / 2 - 10;
+            const sliceAngle = (2 * Math.PI) / numSlices;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < numSlices; i++) {
+                const angle = currentAngle + i * sliceAngle;
+                const isCompleted = studentProfile.completedQuestions.includes(QUESTION_DATA[i].id);
+
+                // Draw Slice Arc
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, angle, angle + sliceAngle);
+                ctx.closePath();
+
+                ctx.fillStyle = isCompleted ? "#cbd5e1" : SLICE_COLORS[i % SLICE_COLORS.length];
+                ctx.fill();
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Draw Slice Number Label with Century Gothic Font (Requirement: Font Century Gothic 20)
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle + sliceAngle / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = isCompleted ? "#64748b" : "#ffffff";
+                
+                // MANDATORY FONT REQUIREMENT: Century Gothic 20px
+                ctx.font = "bold 20px 'Century Gothic', 'CenturyGothic', sans-serif";
+                
+                // Text content: Number 1-15 (or Checkmark if completed)
+                const labelText = isCompleted ? `✓ ${i + 1}` : `${i + 1}`;
+                ctx.fillText(labelText, radius - 25, 7);
+                ctx.restore();
+            }
+
+            // Draw Central Circle Hub
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 35, 0, 2 * Math.PI);
+            ctx.fillStyle = "#ffffff";
+            ctx.fill();
+            ctx.strokeStyle = "#4f46e5";
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            // Inner Hub Text
+            ctx.fillStyle = "#4f46e5";
+            ctx.font = "bold 14px 'Fredoka', sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("KVKVK", centerX, centerY + 5);
+        }
+
+        /* SPIN WHEEL LOGIC */
+        function spinWheel() {
+            if (isSpinning) return;
+
+            // Check if all questions are completed
+            if (studentProfile.completedQuestions.length >= QUESTION_DATA.length) {
+                alertModal("Tahniah! Murid telah menyelesaikan kesemua 15 soalan Roda Impian!");
+                generateCertificate();
+                return;
+            }
+
+            isSpinning = true;
+            document.getElementById('spinBtn').disabled = true;
+            document.getElementById('spinBtn').classList.add('opacity-50');
+
+            // Pick a random uncompleted question index
+            const uncompletedIndices = QUESTION_DATA
+                .map((q, idx) => studentProfile.completedQuestions.includes(q.id) ? -1 : idx)
+                .filter(idx => idx !== -1);
+
+            const targetIndex = uncompletedIndices[Math.floor(Math.random() * uncompletedIndices.length)];
+            selectedSliceIndex = targetIndex;
+
+            const numSlices = QUESTION_DATA.length;
+            const sliceAngle = (2 * Math.PI) / numSlices;
+
+            // Calculate final angle so pointer at TOP (270 deg / 1.5 PI) lands on targetIndex
+            const targetSliceCenterAngle = targetIndex * sliceAngle + sliceAngle / 2;
+            const pointerAngle = 1.5 * Math.PI; 
+            
+            // Extra full rotations (5-8 spins)
+            const extraRotations = (5 + Math.floor(Math.random() * 3)) * 2 * Math.PI;
+            const finalAngle = pointerAngle - targetSliceCenterAngle + extraRotations;
+
+            const startAngle = currentAngle % (2 * Math.PI);
+            const totalSpinAngle = finalAngle - startAngle;
+
+            const duration = 4000; // 4 seconds spin
+            const startTime = performance.now();
+
+            function animateSpin(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Ease out cubic formula
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                currentAngle = startAngle + totalSpinAngle * easeOut;
+
+                drawWheel();
+                playSound('tick');
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateSpin);
+                } else {
+                    isSpinning = false;
+                    document.getElementById('spinBtn').disabled = false;
+                    document.getElementById('spinBtn').classList.remove('opacity-50');
+
+                    // Wheel Stopped -> Update UI & prompt open question
+                    const qData = QUESTION_DATA[selectedSliceIndex];
+                    document.getElementById('currentSliceBadge').innerText = `Nombor ${qData.id} Dipilih!`;
+                    document.getElementById('currentSliceBadge').className = "bg-amber-400 text-slate-900 text-xs font-bold px-2.5 py-1 rounded-lg animate-bounce";
+
+                    document.getElementById('wheelPromptBox').innerHTML = `
+                        <div class="text-3xl font-black text-indigo-700 mb-1">SOALAN NOMBOR ${qData.id}</div>
+                        <p class="font-bold text-slate-800 text-lg">Perkataan: "${qData.hint}"</p>
+                        <p class="text-xs text-emerald-600 font-bold mt-1">Sedia untuk +10 Markah!</p>
+                    `;
+
+                    document.getElementById('openQuestionBtn').classList.remove('hidden');
+                    
+                    // Auto open question modal after 600ms
+                    setTimeout(() => {
+                        openQuestionModal(targetIndex);
+                    }, 600);
+                }
+            }
+
+            requestAnimationFrame(animateSpin);
+        }
+
+        /* ==========================================================================
+           5. QUESTION MODAL INTERACTIVE MECHANICS (CHOICE / DRAG / BLANK)
+           ========================================================================== */
+        function openQuestionModal(index) {
+            currentQuestion = QUESTION_DATA[index];
+            currentStep = 1;
+
+            document.getElementById('modalNumberBadge').innerText = currentQuestion.id;
+            document.getElementById('questionImageContainer').innerHTML = currentQuestion.image || currentQuestion.svg;
+            document.getElementById('questionHintText').innerText = `Petunjuk: ${currentQuestion.hint}`;
+
+            // Reset Feedback Box
+            const fbBox = document.getElementById('feedbackBox');
+            fbBox.className = "hidden mt-4 p-4 rounded-2xl text-center font-bold text-base transition-all";
+            fbBox.innerText = "";
+
+            renderStepView();
+            document.getElementById('questionModal').classList.remove('hidden');
+        }
+
+        function openCurrentQuestionModal() {
+            if (selectedSliceIndex !== null) {
+                openQuestionModal(selectedSliceIndex);
+            }
+        }
+
+        function closeQuestionModal() {
+            document.getElementById('questionModal').classList.add('hidden');
+        }
+
+        function renderStepView() {
+            const t1 = document.getElementById('task1Container');
+            const t2 = document.getElementById('task2Container');
+            const t3 = document.getElementById('task3Container');
+
+            const s1 = document.getElementById('stepTab1');
+            const s2 = document.getElementById('stepTab2');
+            const s3 = document.getElementById('stepTab3');
+
+            document.getElementById('modalNextBtn').classList.add('hidden');
+
+            if (currentStep === 1) {
+                t1.classList.remove('hidden');
+                t2.classList.add('hidden');
+                t3.classList.add('hidden');
+
+                s1.className = "pb-2 border-b-4 border-indigo-600 text-indigo-600 font-bold flex items-center gap-1.5";
+                s2.className = "pb-2 text-slate-400 flex items-center gap-1.5 opacity-60";
+                s3.className = "pb-2 text-slate-400 flex items-center gap-1.5 opacity-60";
+
+                renderTask1Options();
+            } else if (currentStep === 2) {
+                t1.classList.add('hidden');
+                t2.classList.remove('hidden');
+                t3.classList.add('hidden');
+
+                s1.className = "pb-2 text-emerald-600 font-bold flex items-center gap-1.5";
+                s2.className = "pb-2 border-b-4 border-indigo-600 text-indigo-600 font-bold flex items-center gap-1.5";
+                s3.className = "pb-2 text-slate-400 flex items-center gap-1.5 opacity-60";
+
+                renderTask2DragDrop();
+            } else if (currentStep === 3) {
+                t1.classList.add('hidden');
+                t2.classList.add('hidden');
+                t3.classList.remove('hidden');
+
+                s1.className = "pb-2 text-emerald-600 font-bold flex items-center gap-1.5";
+                s2.className = "pb-2 text-emerald-600 font-bold flex items-center gap-1.5";
+                s3.className = "pb-2 border-b-4 border-indigo-600 text-indigo-600 font-bold flex items-center gap-1.5";
+
+                renderTask3Blank();
+            }
+        }
+
+        /* TASK 1: 3 PILIHAN JAWAPAN */
+        function renderTask1Options() {
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+
+            // Shuffle options
+            const opts = [...currentQuestion.options];
+            opts.sort(() => Math.random() - 0.5);
+
+            opts.forEach(optionText => {
+                const btn = document.createElement('button');
+                btn.className = "py-4 px-3 bg-slate-100 hover:bg-indigo-100 hover:border-indigo-400 border-2 border-slate-200 rounded-2xl font-black text-lg text-slate-800 transition transform active:scale-95 text-center shadow-sm";
+                btn.innerText = optionText;
+                btn.onclick = () => checkTask1Choice(optionText, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function checkTask1Choice(selected, btnElement) {
+            const fbBox = document.getElementById('feedbackBox');
+            fbBox.classList.remove('hidden');
+
+            if (selected === currentQuestion.word) {
+                // CORRECT ANSWER: "TERBAIK"
+                playSound('correct');
+                btnElement.className = "py-4 px-3 bg-emerald-500 text-white border-2 border-emerald-600 rounded-2xl font-black text-lg text-center shadow-md animate-pop";
+                
+                fbBox.className = "mt-4 p-4 rounded-2xl text-center font-black text-lg bg-emerald-100 text-emerald-800 border-2 border-emerald-300 animate-pop";
+                fbBox.innerHTML = `<i class="fa-solid fa-circle-check text-xl"></i> TERBAIK! Jawapan Anda Betul! (+10 Markah)`;
+
+                document.getElementById('modalNextBtn').classList.remove('hidden');
+            } else {
+                // WRONG ANSWER: "CUBA LAGI"
+                playSound('wrong');
+                btnElement.className = "py-4 px-3 bg-rose-100 text-rose-700 border-2 border-rose-300 rounded-2xl font-black text-lg text-center shadow-sm animate-pop";
+
+                fbBox.className = "mt-4 p-4 rounded-2xl text-center font-black text-lg bg-rose-100 text-rose-800 border-2 border-rose-300 animate-pop";
+                fbBox.innerHTML = `<i class="fa-solid fa-circle-xmark text-xl"></i> CUBA LAGI! Sila pilih jawapan yang lain.`;
+            }
+        }
+
+        /* TASK 2: DRAG & DROP HURUF */
+        let draggedTileValue = null;
+
+        function renderTask2DragDrop() {
+            const slotsContainer = document.getElementById('dropSlotsContainer');
+            const tilesContainer = document.getElementById('dragTilesContainer');
+
+            slotsContainer.innerHTML = '';
+            tilesContainer.innerHTML = '';
+
+            const wordLetters = currentQuestion.letters;
+
+            // Render Empty Drop Slots
+            wordLetters.forEach((_, idx) => {
+                const slot = document.createElement('div');
+                slot.className = "drop-zone w-12 h-14 bg-white rounded-xl border-2 border-dashed border-indigo-400 flex items-center justify-center font-black text-xl text-indigo-900 shadow-inner";
+                slot.dataset.slotIndex = idx;
+
+                // Drag over events
+                slot.ondragover = (e) => { e.preventDefault(); slot.classList.add('hovered'); };
+                slot.ondragleave = () => { slot.classList.remove('hovered'); };
+                slot.ondrop = (e) => handleDrop(e, slot);
+
+                slotsContainer.appendChild(slot);
+            });
+
+            // Shuffle Letters for source tiles
+            const shuffled = [...wordLetters].sort(() => Math.random() - 0.5);
+
+            shuffled.forEach((char, tileId) => {
+                const tile = document.createElement('div');
+                tile.className = "draggable-tile w-12 h-14 bg-amber-400 text-slate-900 font-black text-xl rounded-xl flex items-center justify-center shadow-md border-b-4 border-amber-600";
+                tile.innerText = char;
+                tile.draggable = true;
+                tile.id = `tile-${tileId}`;
+
+                tile.ondragstart = (e) => {
+                    draggedTileValue = { char, elementId: tile.id };
+                    e.dataTransfer.setData('text/plain', tile.id);
+                };
+
+                // Touch support click fallback
+                tile.onclick = () => autoPlaceTileInNextSlot(char, tile);
+
+                tilesContainer.appendChild(tile);
+            });
+        }
+
+        function handleDrop(e, slotElement) {
+            e.preventDefault();
+            slotElement.classList.remove('hovered');
+
+            if (draggedTileValue && !slotElement.innerText) {
+                slotElement.innerText = draggedTileValue.char;
+                const srcTile = document.getElementById(draggedTileValue.elementId);
+                if (srcTile) srcTile.style.visibility = 'hidden';
+                draggedTileValue = null;
+            }
+        }
+
+        function autoPlaceTileInNextSlot(char, tileElement) {
+            const slots = document.querySelectorAll('#dropSlotsContainer .drop-zone');
+            for (let slot of slots) {
+                if (!slot.innerText) {
+                    slot.innerText = char;
+                    tileElement.style.visibility = 'hidden';
+                    break;
+                }
+            }
+        }
+
+        function verifyDragAndDrop() {
+            const slots = document.querySelectorAll('#dropSlotsContainer .drop-zone');
+            let userWord = '';
+            slots.forEach(s => userWord += s.innerText);
+
+            const fbBox = document.getElementById('feedbackBox');
+            fbBox.classList.remove('hidden');
+
+            if (userWord === currentQuestion.word) {
+                playSound('correct');
+                fbBox.className = "mt-4 p-4 rounded-2xl text-center font-black text-lg bg-emerald-100 text-emerald-800 border-2 border-emerald-300 animate-pop";
+                fbBox.innerHTML = `<i class="fa-solid fa-circle-check text-xl"></i> TERBAIK! Susunan Huruf Tepat!`;
+                document.getElementById('modalNextBtn').classList.remove('hidden');
+            } else {
+                playSound('wrong');
+                fbBox.className = "mt-4 p-4 rounded-2xl text-center font-black text-lg bg-rose-100 text-rose-800 border-2 border-rose-300 animate-pop";
+                fbBox.innerHTML = `<i class="fa-solid fa-circle-xmark text-xl"></i> CUBA LAGI! Susun semula huruf KVKVK.`;
+                // Reset tiles
+                renderTask2DragDrop();
+            }
+        }
+
+        /* TASK 3: FILL IN THE BLANKS */
+        function renderTask3Blank() {
+            document.getElementById('blankPromptDisplay').innerText = currentQuestion.blank;
+            const input = document.getElementById('blankInput');
+            input.value = '';
+            input.focus();
+        }
+
+        function verifyFillInBlank() {
+            const userInput = document.getElementById('blankInput').value.trim().toUpperCase();
+            const fbBox = document.getElementById('feedbackBox');
+            fbBox.classList.remove('hidden');
+
+            if (userInput === currentQuestion.word) {
+                playSound('correct');
+                fbBox.className = "mt-4 p-4 rounded-2xl text-center font-black text-lg bg-emerald-100 text-emerald-800 border-2 border-emerald-300 animate-pop";
+                fbBox.innerHTML = `<i class="fa-solid fa-circle-check text-xl"></i> TERBAIK! Soalan ${currentQuestion.id} Selesai! (+10 Markah)`;
+
+                // Award points & mark question completed
+                if (!studentProfile.completedQuestions.includes(currentQuestion.id)) {
+                    studentProfile.completedQuestions.push(currentQuestion.id);
+                    studentProfile.points += 10;
+                    updateStudentScoreDisplay();
+                }
+
+                document.getElementById('modalNextBtn').classList.remove('hidden');
+                document.getElementById('modalNextBtn').innerHTML = `<span>Selesai Soalan!</span> <i class="fa-solid fa-check"></i>`;
+            } else {
+                playSound('wrong');
+                fbBox.className = "mt-4 p-4 rounded-2xl text-center font-black text-lg bg-rose-100 text-rose-800 border-2 border-rose-300 animate-pop";
+                fbBox.innerHTML = `<i class="fa-solid fa-circle-xmark text-xl"></i> CUBA LAGI! Ejaan belum tepat.`;
+            }
+        }
+
+        function nextQuestionTask() {
+            if (currentStep < 3) {
+                currentStep++;
+                const fbBox = document.getElementById('feedbackBox');
+                fbBox.classList.add('hidden');
+                renderStepView();
+            } else {
+                // Completed all 3 stages for this word
+                closeQuestionModal();
+                drawWheel();
+                renderWordGrid();
+                updateTeacherRecordTable();
+                
+                // Reset Selected State Banner
+                document.getElementById('currentSliceBadge').innerText = "Sedia Memutar";
+                document.getElementById('currentSliceBadge').className = "bg-slate-200 text-slate-700 text-xs font-bold px-2.5 py-1 rounded-lg";
+                document.getElementById('openQuestionBtn').classList.add('hidden');
+                document.getElementById('wheelPromptBox').innerHTML = `
+                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <p class="font-bold text-slate-800 text-lg">Soalan Selesai!</p>
+                    <p class="text-xs text-slate-500 mt-1">Putar roda sekali lagi untuk soalan seterusnya.</p>
+                `;
+            }
+        }
+
+        /* ==========================================================================
+           6. PROFILE, LEADERBOARD, & TEACHERS' RECORD MANAGEMENT
+           ========================================================================== */
+        function updateStudentScoreDisplay() {
+            document.getElementById('totalPoints').innerText = studentProfile.points;
+            document.getElementById('progressText').innerText = `${studentProfile.completedQuestions.length} / 15 Soalan Selesai`;
+        }
+
+        function openProfileModal() {
+            document.getElementById('inputStudentName').value = studentProfile.name;
+            document.getElementById('inputStudentClass').value = studentProfile.className;
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+
+        function saveStudentProfile(e) {
+            e.preventDefault();
+            studentProfile.name = document.getElementById('inputStudentName').value.trim();
+            studentProfile.className = document.getElementById('inputStudentClass').value.trim();
+
+            document.getElementById('navStudentName').innerText = studentProfile.name;
+            document.getElementById('navStudentClass').innerText = studentProfile.className;
+
+            closeProfileModal();
+            updateTeacherRecordTable();
+        }
+
+        function renderWordGrid() {
+            const grid = document.getElementById('wordGrid');
+            grid.innerHTML = '';
+
+            QUESTION_DATA.forEach(q => {
+                const isDone = studentProfile.completedQuestions.includes(q.id);
+                const item = document.createElement('div');
+                item.className = isDone 
+                    ? "bg-emerald-500 text-white p-2 rounded-xl shadow-sm border border-emerald-600 flex items-center justify-center gap-1"
+                    : "bg-slate-100 text-slate-700 p-2 rounded-xl border border-slate-200 flex items-center justify-center gap-1";
+                item.innerHTML = isDone 
+                    ? `<i class="fa-solid fa-check-circle text-xs"></i> ${q.id}. ${q.word}` 
+                    : `${q.id}. ${q.word}`;
+                grid.appendChild(item);
+            });
+        }
+
+        function updateTeacherRecordTable() {
+            // Check if current student exists in records or add/update
+            const level = studentProfile.points >= 120 ? "EXCELLENT" : "INTERVENSI";
+            
+            let recordIndex = teacherRecords.findIndex(r => r.name === studentProfile.name);
+            if (recordIndex >= 0) {
+                teacherRecords[recordIndex].points = studentProfile.points;
+                teacherRecords[recordIndex].completedCount = studentProfile.completedQuestions.length;
+                teacherRecords[recordIndex].status = level;
+                teacherRecords[recordIndex].className = studentProfile.className;
+            } else {
+                teacherRecords.push({
+                    id: teacherRecords.length + 1,
+                    name: studentProfile.name,
+                    className: studentProfile.className,
+                    points: studentProfile.points,
+                    completedCount: studentProfile.completedQuestions.length,
+                    status: level
+                });
+            }
+
+            // Render Teacher Table
+            const tbody = document.getElementById('teacherTableBody');
+            tbody.innerHTML = '';
+
+            let excCount = 0;
+            let intCount = 0;
+
+            teacherRecords.forEach((row, idx) => {
+                if (row.status === "EXCELLENT") excCount++;
+                else intCount++;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+
+                const badgeClass = row.status === "EXCELLENT"
+                    ? "bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-1 rounded-full text-xs font-bold"
+                    : "bg-rose-100 text-rose-800 border border-rose-300 px-2.5 py-1 rounded-full text-xs font-bold";
+
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-slate-500">${idx + 1}</td>
+                    <td class="p-3 font-bold text-slate-800">${row.name}</td>
+                    <td class="p-3 text-slate-600">${row.className}</td>
+                    <td class="p-3 text-center font-bold text-indigo-600">${row.completedCount} / 15</td>
+                    <td class="p-3 text-center font-black text-amber-600">${row.points}</td>
+                    <td class="p-3 text-center"><span class="${badgeClass}">${row.status}</span></td>
+                    <td class="p-3 text-center">
+                        <button onclick="printCertForStudent('${row.name}', '${row.className}', ${row.points}, '${row.status}')" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition">
+                            <i class="fa-solid fa-award"></i> Sijil
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Update Summaries
+            document.getElementById('summaryTotalStudents').innerText = teacherRecords.length;
+            document.getElementById('summaryExcellentCount').innerText = excCount;
+            document.getElementById('summaryIntervensiCount').innerText = intCount;
+
+            // Render Leaderboard
+            renderLeaderboard();
+        }
+
+        function renderLeaderboard() {
+            const sorted = [...teacherRecords].sort((a, b) => b.points - a.points);
+            const tbody = document.getElementById('leaderboardTableBody');
+            tbody.innerHTML = '';
+
+            sorted.forEach((row, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-indigo-50/50 transition border-b border-slate-100";
+
+                let medalIcon = `${idx + 1}`;
+                if (idx === 0) medalIcon = `<i class="fa-solid fa-medal text-amber-400 text-xl"></i>`;
+                else if (idx === 1) medalIcon = `<i class="fa-solid fa-medal text-slate-400 text-xl"></i>`;
+                else if (idx === 2) medalIcon = `<i class="fa-solid fa-medal text-amber-700 text-xl"></i>`;
+
+                const badgeClass = row.status === "EXCELLENT"
+                    ? "bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-xs font-bold"
+                    : "bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full text-xs font-bold";
+
+                tr.innerHTML = `
+                    <td class="p-3 text-center font-bold">${medalIcon}</td>
+                    <td class="p-3 font-bold text-slate-800">${row.name}</td>
+                    <td class="p-3 text-slate-500">${row.className}</td>
+                    <td class="p-3 text-center font-black text-amber-600 text-base">${row.points} MATA</td>
+                    <td class="p-3 text-center"><span class="${badgeClass}">${row.status}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        /* CERTIFICATE GENERATOR */
+        function generateCertificate() {
+            const level = studentProfile.points >= 120 ? "EXCELLENT" : "INTERVENSI";
+            printCertForStudent(studentProfile.name, studentProfile.className, studentProfile.points, level);
+        }
+
+        function printCertForStudent(name, className, points, level) {
+            playSound('win');
+            document.getElementById('certStudentName').innerText = name;
+            document.getElementById('certStudentClass').innerText = className;
+            document.getElementById('certMarks').innerText = `${points} / 150`;
+
+            const levelElem = document.getElementById('certLevel');
+            levelElem.innerText = level;
+            levelElem.className = level === "EXCELLENT" ? "text-xl font-black text-emerald-600" : "text-xl font-black text-rose-600";
+
+            const today = new Date().toLocaleDateString('ms-MY', { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('certDate').innerText = today;
+
+            document.getElementById('certificateModal').classList.remove('hidden');
+        }
+
+        function closeCertificateModal() {
+            document.getElementById('certificateModal').classList.add('hidden');
+        }
+
+        /* EXPORT DATA TO CSV FOR TEACHER */
+        function exportTeacherRecord() {
+            let csvContent = "data:text/csv;charset=utf-8,Bil,Nama Murid,Kelas,Markah,Soalan Selesai,Tahap\n";
+            teacherRecords.forEach((r, idx) => {
+                csvContent += `${idx + 1},"${r.name}","${r.className}",${r.points},${r.completedCount},${r.status}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Rekod_Pentaksiran_KVKVK_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function resetProgress() {
+            if (confirmModal("Adakah anda pasti mahu set semula markah dan roda impian murid ini?")) {
+                studentProfile.points = 0;
+                studentProfile.completedQuestions = [];
+                updateStudentScoreDisplay();
+                drawWheel();
+                renderWordGrid();
+                updateTeacherRecordTable();
+            }
+        }
+
+        function switchTab(tab) {
+            document.getElementById('gameSection').classList.add('hidden');
+            document.getElementById('leaderboardSection').classList.add('hidden');
+            document.getElementById('teacherSection').classList.add('hidden');
+
+            document.getElementById('tabBtnGame').className = "px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 text-slate-700 hover:bg-slate-100";
+            document.getElementById('tabBtnLeaderboard').className = "px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 text-slate-700 hover:bg-slate-100";
+            document.getElementById('tabBtnTeacher').className = "px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 text-slate-700 hover:bg-slate-100";
+
+            if (tab === 'game') {
+                document.getElementById('gameSection').classList.remove('hidden');
+                document.getElementById('tabBtnGame').className = "px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+            } else if (tab === 'leaderboard') {
+                document.getElementById('leaderboardSection').classList.remove('hidden');
+                document.getElementById('tabBtnLeaderboard').className = "px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 bg-amber-500 text-white shadow-md";
+            } else if (tab === 'teacher') {
+                document.getElementById('teacherSection').classList.remove('hidden');
+                document.getElementById('tabBtnTeacher').className = "px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 bg-emerald-600 text-white shadow-md";
+            }
+        }
+
+        // Custom Modal Alert / Confirm without browser alert()
+        function alertModal(msg) {
+            const div = document.createElement('div');
+            div.className = "fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-pop";
+            div.innerHTML = `
+                <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl border-4 border-indigo-400">
+                    <div class="text-3xl text-amber-500 mb-2"><i class="fa-solid fa-bell"></i></div>
+                    <p class="font-bold text-slate-800 text-base mb-4">${msg}</p>
+                    <button onclick="this.parentElement.parentElement.remove()" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl text-xs shadow">OK</button>
+                </div>
+            `;
+            document.body.appendChild(div);
+        }
+
+        function confirmModal(msg) {
+            return window.confirm(msg); // standard visual fallback
+        }
+
+        /* INITIALIZATION ON LOAD */
+        window.onload = function() {
+            drawWheel();
+            renderWordGrid();
+            updateTeacherRecordTable();
+            updateStudentScoreDisplay();
+        };
+    </script>
+</body>
+</html>
